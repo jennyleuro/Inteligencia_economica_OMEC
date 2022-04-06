@@ -21,9 +21,13 @@ def data_extraction(k,url):
     #Ciclo para separar la información
     for i in range(0,len(info_extraction), 3):
         element = info_extraction[i:i+3]
-        period_list.append(element[0])
-        value_list.append(element[1])
-        obs_status_list.append(element[2])
+
+        if(element[0]== '1999-12' or element[0] == '1999-Q4'):
+            break
+        else:
+            period_list.append(element[0])
+            value_list.append(element[1])
+            obs_status_list.append(element[2])
 
     #Diccionario con la información
     data = {'Period': period_list,
