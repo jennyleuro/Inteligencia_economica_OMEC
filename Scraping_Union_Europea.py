@@ -1,11 +1,15 @@
 import requests
 from lxml import html
 import pandas as pd
+import funciones_union_e as fune
+import datetime
 
 #header necesario para evitar bloqueos
 encabezados = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36"
 }
+
+writer = pd.ExcelWriter('indicadores_trimestrales_UE.xlsx')
 
 #Función que extrae la información de cada url
 def data_extraction(k,url):
@@ -15,31 +19,31 @@ def data_extraction(k,url):
     #Empleo de xpath para extraer la información deseada: period, value, y obs. status dentro de la tabla
     info_extraction = parser.xpath("//table[@id = 'dataTableID']//td[contains(@class, 'light') or contains(@class, 'dark')]/text()")
 
-    #Creación de listas que permitirán almacenar la información
-    period_list, value_list, obs_status_list = [], [], []
-    
-    #Ciclo para separar la información
-    for i in range(0,len(info_extraction), 3):
-        element = info_extraction[i:i+3]
+    #Separando la información y guardandola en un Data Frame
+    df = fune.infoSplitDf(info_extraction, k)
 
-        if(element[0]== '1999-12' or element[0] == '1999-Q4'):
-            break
-        else:
-            period_list.append(element[0])
-            value_list.append(element[1])
-            obs_status_list.append(element[2])
-
-    #Diccionario con la información
-    data = {'Period': period_list,
-        'Value': value_list,
-        'Obs Status': obs_status_list}
-
-    #Uso de la libreria pandas para crear un Data Frame
-    df = pd.DataFrame(data, columns=['Period', 'Value', 'Obs Status'])
+    #Limpieza de datos
+    if (k == 'reservas_internacionales' or k == 'tipo_de_cambio' or k == 'solvencia' or k == 'inversion_de_portafolio'):
+        df = fune.dataCleaning(df)
+        quarterly = df.resample('Q', on = 'Fecha').mean()
+        quarterly = quarterly.reset_index()
+        lista_fechas = []
+        for fecha in quarterly['Fecha']:
+            dias = int(fecha.strftime('%d'))-1
+            fecha_nueva = fecha - datetime.timedelta(days = dias)
+            lista_fechas.append(fecha_nueva)
+        quarterly['Fecha'] = lista_fechas
+        quarterly = quarterly.set_index('Fecha')
+        quarterly.to_excel(writer, sheet_name = k)
+    else:
+        df = df.set_index('Fecha')
+        df.dropna()
+        df = df.sort_index()
+        df.to_excel(writer, sheet_name= k)
 
     #Guardando la información en archivos csv
-    df.to_csv('data_'+k+'.csv')
-    print("Se extrajo la información correspondiente a "+k)
+    """ df.to_csv('data_'+k+'.csv')
+    print("Se extrajo la información correspondiente a "+k) """
 
 urls = {
     'reservas_internacionales': "https://sdw.ecb.europa.eu/quickview.do?SERIES_KEY=340.RA6.M.N.U2.W1.S121.S1.LE.A.FA.R.F._Z.EUR.X1._X.N",
@@ -55,3 +59,7 @@ urls = {
 #Ciclo que permite recorrer las claves y valores del diccionario urls
 for k, v in list(urls.items()):
     data_extraction(k,v) 
+
+writer.save()
+
+print('Se extrajo la información y se guardó en el Excel')
