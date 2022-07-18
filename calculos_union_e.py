@@ -33,11 +33,17 @@ indicadores_listos = [df_deuda_export, df_liquidez, df_solvencia, df_PIB, df_por
 
 writer = pd.ExcelWriter('episodios_indicadores_UE.xlsx')
 
+df_quantity = pd.DataFrame(columns= ['Indicador', 'Alertas', 'Crisis'])
+
 for indicador in indicadores_listos:
     columns_names = list(indicador.columns.values)
     indicador = fune.espisodios(indicador, columns_names)
+    list_quantity = fune.episode_count(indicador, columns_names[0])
+    df_quantity=df_quantity.append({'Indicador' : list_quantity[0] , 'Alertas' : list_quantity[1], 'Crisis' : list_quantity[2]} , ignore_index=True)    
     indicador = indicador.style.applymap(fune.text_format)
     indicador.to_excel(writer, sheet_name = columns_names[0])
+
+df_quantity.to_excel(writer, sheet_name = 'Cantidad Episodios')
 
 writer.save()
 

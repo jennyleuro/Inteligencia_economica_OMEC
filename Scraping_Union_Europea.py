@@ -23,7 +23,8 @@ def data_extraction(k,url):
     df = fune.infoSplitDf(info_extraction, k)
 
     #Limpieza de datos
-    if (k == 'reservas_internacionales' or k == 'tipo_de_cambio' or k == 'solvencia' or k == 'inversion_de_portafolio'):
+    if (k == 'reservas_internacionales' or k == 'tipo_de_cambio' 
+    or k == 'solvencia' or k == 'inversion_de_portafolio'):
         df = fune.dataCleaning(df)
         quarterly = df.resample('Q', on = 'Fecha').mean()
         quarterly = quarterly.reset_index()
@@ -40,10 +41,6 @@ def data_extraction(k,url):
         df.dropna()
         df = df.sort_index()
         df.to_excel(writer, sheet_name= k)
-
-    #Guardando la información en archivos csv
-    """ df.to_csv('data_'+k+'.csv')
-    print("Se extrajo la información correspondiente a "+k) """
 
 urls = {
     'reservas_internacionales': "https://sdw.ecb.europa.eu/quickview.do?SERIES_KEY=340.RA6.M.N.U2.W1.S121.S1.LE.A.FA.R.F._Z.EUR.X1._X.N",

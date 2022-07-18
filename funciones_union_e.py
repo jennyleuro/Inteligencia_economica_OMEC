@@ -6,7 +6,7 @@ import numpy as np
 
 
 def infoSplitDf(info_extraction, indicador):
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8') #YA
 
     period_list, value_list = [], []
 
@@ -67,20 +67,32 @@ def espisodios(df, columns_names):
     df['Sistem Alertas'] = (df[columns_names[-1]]-df['Media Movil'])/df['D.E']
     conditionlist = []
 
-    if(columns_names[0] == 'liquidez' or columns_names[0] == 'solvencia' or columns_names[0] == 'reservas_internacionales' or columns_names[0] == 'PIB' or columns_names[0] == 'inversion_de_portafolio'):
+    if(columns_names[0] == 'liquidez' or columns_names[0] == 'solvencia'
+    or columns_names[0] == 'reservas_internacionales' 
+    or columns_names[0] == 'PIB' or columns_names[0] == 'inversion_de_portafolio'):
         conditionlist = [
             ((-1.5 >= df['Sistem Alertas'])) & ((df['Sistem Alertas'] > -2.0)),
             (-2.0 >= df['Sistem Alertas']),
             (-1.5 < df['Sistem Alertas'])]
-    # Indicadores en alerta y crisis con calores positivos
+    # Indicadores en alerta y crisis con valores positivos
     else:
         conditionlist = [
             ((1.5 <= df['Sistem Alertas'])) & ((df['Sistem Alertas'] < 2.0)),
             (2.0 <= df['Sistem Alertas']),
             (1.5 > df['Sistem Alertas'])]
 
-
     choicelist = ['Alerta', 'Crisis', 'Sin Episodio']
     df['Episodio'] = np.select(conditionlist, choicelist, default='Not Specified')
     return df
+
+def episode_count(df, indicador):
+  crisis = 0
+  alertas = 0
+  for episodio in df['Episodio']:
+    if(episodio == 'Alerta'):
+      alertas += 1
+    elif (episodio == 'Crisis'):
+      crisis += 1
+  episode_quantity = [indicador, alertas, crisis]
+  return episode_quantity
 
